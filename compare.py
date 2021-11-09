@@ -35,7 +35,8 @@ def compare_files(directory: str) -> None:
             else:
                 missing_files.append(out_file)
 
-    print('>>> Currently missing:', ', '.join(missing_files))
+    if missing_files:
+        print('>>> Currently missing:', ', '.join(missing_files))
 
 #################################################################################################################################
 
