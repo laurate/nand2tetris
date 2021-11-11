@@ -37,7 +37,7 @@ for file in *.tst; do
     elif [[ ! "$result" =~ "Comparison failure" ]]; then
         # syntax error
         echo -ne "${_red}fail: "
-        echo -e "$result${_rst}"
+        echo -e "$result${_rst}" | sed -e "s#/.*/projects/##"
         fail_names="$fail_names, ${file%.tst}"
     else
         echo -e "${_red}fail${_rst}"
