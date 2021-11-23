@@ -31,6 +31,5 @@ CHIP PC {
     // 3way or for register load
     Or(a=load, b=inc, out=loadorinc);
     Or(a=loadorinc, b=reset, out=loadorincorreset);
-
     Register(in=resetout, load=loadorincorreset, out=out, out=internalout);
 }
