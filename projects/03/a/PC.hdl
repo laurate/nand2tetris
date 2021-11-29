@@ -17,4 +17,19 @@ CHIP PC {
 
     PARTS:
     // Put your code here:
+
+    // inc -> mux out / out + 1
+    Inc16(in=internalout, out=internalinc);
+    Mux16(a=internalout, b=internalinc, sel=inc, out=incout);
+
+    // load -> mux inc / in
+    Mux16(a=incout, b=in, sel=load, out=loadout);
+
+    // reset -> mux load / 0
+    Mux16(a=loadout, b=false, sel=reset, out=resetout);
+
+    // 3way or for register load
+    Or(a=load, b=inc, out=loadorinc);
+    Or(a=loadorinc, b=reset, out=loadorincorreset);
+    Register(in=resetout, load=loadorincorreset, out=out, out=internalout);
 }
