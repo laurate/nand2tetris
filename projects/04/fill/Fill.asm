@@ -18,7 +18,7 @@
     D;JEQ   // goto WHITE if no key pressed
 
     @color
-    M=1
+    M=-1
 
     @8191
     D=A
@@ -67,7 +67,7 @@
     @iterator
     D=M
     @BLACK
-    D;JEQ
+    D;JLT
 
     @FILLSCREEN
     0;JMP
