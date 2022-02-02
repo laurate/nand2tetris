@@ -2,6 +2,8 @@
 
 # Chapter 7 - VM Translator (stack arithmetic, memory access)
 
+from typing import Optional
+
 ############################################################################################################################################################################
 
 label_counter: int = 0
@@ -23,7 +25,7 @@ def write_output_to_file(output: list[str], output_file: str) -> None:
         f.write(output)
         f.close()
 
-def clean_whitespace(lines) -> list[str]:
+def clean_whitespace(lines: list[str]) -> list[str]:
 
     return_lines = []
 
@@ -50,15 +52,79 @@ def pop_from_stack(write_to_d: bool) -> list[str]:
 
     return lines
 
-def push_to_stack(input) -> list[str]:
+def push_to_stack(input: Optional[str] = '', read_from_d: Optional[bool] = False) -> list[str]:
+    '''
+    Write input value to stack and increment stack pointer
+    '''
+    if read_from_d:
+        return ['@SP', 'A=M', 'M=D', '@SP', 'M=M+1']
+    else:
+        return [f'@{input}', 'D=A', '@SP', 'A=M', 'M=D', '@SP', 'M=M+1']
 
-    return [f'@{input}', 'D=A', '@SP', 'A=M', 'M=D', '@SP', 'M=M+1']
+def push_from_symbol(symbol: str, offset: str) -> list[str]:
+    '''
+    Push value at address / offset to stack
+    RAM[1] = LCL (local)
+    RAM[2] = ARG (argument)
+    RAM[3] = THIS
+    RAM[4] = THAT
+    RAM[5-12] = TEMP
+    '''
+    lines = []
+    lines.extend([f'// PUSH value from {symbol} to stack'])
+
+    # get initial address
+    if symbol == 'TEMP':
+        lines.extend(['@5'])
+
+    else:
+        lines.extend([f'@{symbol}'])
+
+    # read value from address + offset
+    for i in range(int(offset)):
+        lines.extend([f'M=M+1'])
+    lines.extend(['M=D'])
+    # write value to stack
+    lines.extend(push_to_stack(read_from_d = True))
+
+    return lines
+
+def pop_to_symbol(symbol: str, offset: str) -> list[str]:
+    '''
+    Pop value from stack and write to address referenced by symbol / offset
+    RAM[1] = LCL (local)
+    RAM[2] = ARG (argument)
+    RAM[3] = THIS
+    RAM[4] = THAT
+    RAM[5-12] = TEMP
+    '''
+    lines = []
+    lines.extend([f'// POP value from stack to {symbol}'])
+
+    # read value from stack -> save to RAM[13]
+    lines.extend(pop_from_stack(write_to_d = True))
+
+    # get initial address
+    if symbol == 'TEMP':
+        lines.extend(['@5'])
+
+    else:
+        lines.extend([f'@{symbol}'])
+        lines.extend(['A=M'])
+
+    # write value to address + offset # TODO -> check if this works with A?
+    for i in range(int(offset)):
+        lines.extend([f'M=M+1'])
+
+    lines.extend(['M=D'])
+
+    return lines
 
 def increment_stack_pointer() -> list[str]:
 
     return ['@SP', 'M=M+1']
 
-def math_operation_2(operator: str) -> list[str]:
+def math_operation(operator: str) -> list[str]:
     '''
     Perform math operation with 2 operands in asm
     operator can be +, -, |, &
@@ -86,7 +152,7 @@ def if_else_operation(if_condition, true_statement, false_statement) -> list[str
     '''
     global label_counter
     lines = []
-    lines.extend([f'// if / else'])
+    lines.extend(['// if / else'])
 
     # if condition is met -> jump to TRUE
     lines.extend([f'@IF_ELSE_{label_counter}.TRUE'])
@@ -143,25 +209,47 @@ def logic_operation(logic_command: str) -> list[str]:
 
     return lines
 
+def initialize_asm() -> list[str]:
+    '''
+    Initialize pointers
+    '''
+    lines = []
+    lines.extend(['@256', 'D=A', '@SP', 'M=D'])
+
+    return lines
+
 def parse_multiple_lines(lines) -> list[str]:
 
     math_commands = ['add', 'sub', 'or', 'and']
     logic_commands = ['eq', 'lt', 'gt', 'neg', 'and', 'or', 'not']
 
+    pointers = {'this': 'THIS', 'that': 'THAT', 'local': 'LCL', 'argument': 'ARG', 'temp': 'TEMP'}
+
     return_lines = []
 
-    # initialize stackpointer SP
-    return_lines.extend(['@256', 'D=A', '@SP', 'M=D'])
+    # initialize asm file
+    return_lines.extend(initialize_asm())
 
     # translate line by line
     for line in lines:
         input = line.split(' ')
 
-        if input[0] == 'push' and input[1] == 'constant':
-            return_lines.extend(push_to_stack(input[-1]))
+        # push from / to stack
+        if input[0] == 'push':
+            if input[1] == 'constant':
+                return_lines.extend(push_to_stack(input = input[-1]))
 
+            elif input[1] in pointers.keys():
+                return_lines.extend(push_from_symbol(symbol = pointers[input[1]], offset = input[-1]))
+
+        # pop from / to stack
+        elif input[0] == 'pop':
+            if input[1] in pointers.keys():
+                return_lines.extend(pop_to_symbol(symbol = pointers[input[1]], offset = input[-1]))
+
+        # math or logic operation
         elif input[0] in math_commands:
-            return_lines.extend(math_operation_2(input[0]))
+            return_lines.extend(math_operation(input[0]))
 
         elif input[0] in logic_commands:
             return_lines.extend(logic_operation(input[0]))
@@ -173,14 +261,14 @@ def parse_multiple_lines(lines) -> list[str]:
 
 def translate(input_file: str) -> None:
 
-    print(f'Translating file {input_file}...')
+    print(f'Translating file {input_file}...\n')
 
     lines = [line.strip() for line in read_input_as_str(input_file)]
     lines = clean_whitespace(lines)
 
     output = parse_multiple_lines(lines)
 
-    print('output: ', output)
+    print('Output: ', output)
 
     output_file = input_file.replace('.vm', '.asm')
     write_output_to_file(output, output_file)
@@ -190,15 +278,15 @@ def translate(input_file: str) -> None:
 if __name__ == "__main__":
 
     # Part 1
-    arithmetic_files = ['./StackArithmetic/SimpleAdd/SimpleAdd.vm', './StackArithmetic/StackTest/StackTest.vm']
+    # arithmetic_files = ['./StackArithmetic/SimpleAdd/SimpleAdd.vm', './StackArithmetic/StackTest/StackTest.vm']
 
-    for file in arithmetic_files:
-        translate(file)
+    # for file in arithmetic_files:
+    #     translate(file)
 
     # Part 2
-    # memory_files = ['./MemoryAccess/BasicTest/BasicTest.vm']
+    memory_files = ['./MemoryAccess/BasicTest/BasicTest.vm']
 
-    # for file in memory_files:
-    #     translate(file)
+    for file in memory_files:
+        translate(file)
 
 ############################################################################################################################################################################
