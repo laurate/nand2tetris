@@ -79,11 +79,13 @@ def push_from_symbol(symbol: str, offset: str) -> list[str]:
 
     else:
         lines.extend([f'@{symbol}'])
+        lines.extend(['A=M'])
 
-    # read value from address + offset
+    # access offset
     for i in range(int(offset)):
-        lines.extend([f'M=M+1'])
-    lines.extend(['M=D'])
+        lines.extend([f'A=A+1'])
+
+    lines.extend(['D=M'])
     # write value to stack
     lines.extend(push_to_stack(read_from_d = True))
 
@@ -112,9 +114,9 @@ def pop_to_symbol(symbol: str, offset: str) -> list[str]:
         lines.extend([f'@{symbol}'])
         lines.extend(['A=M'])
 
-    # write value to address + offset # TODO -> check if this works with A?
+    # access offset
     for i in range(int(offset)):
-        lines.extend([f'M=M+1'])
+        lines.extend([f'A=A+1'])
 
     lines.extend(['M=D'])
 
