@@ -66,15 +66,18 @@ def push_from_symbol(symbol: str, offset: str) -> list[str]:
     Push value at address / offset to stack
     RAM[1] = LCL (local)
     RAM[2] = ARG (argument)
-    RAM[3] = THIS
-    RAM[4] = THAT
+    RAM[3] = THIS / POINTER + 0
+    RAM[4] = THAT / POINTER + 1
     RAM[5-12] = TEMP
     '''
     lines = []
     lines.extend([f'// PUSH value from {symbol} to stack'])
 
     # get initial address
-    if symbol == 'TEMP':
+    if symbol == 'POINTER':
+        lines.extend(['@3'])
+
+    elif symbol == 'TEMP':
         lines.extend(['@5'])
 
     else:
@@ -96,8 +99,8 @@ def pop_to_symbol(symbol: str, offset: str) -> list[str]:
     Pop value from stack and write to address referenced by symbol / offset
     RAM[1] = LCL (local)
     RAM[2] = ARG (argument)
-    RAM[3] = THIS
-    RAM[4] = THAT
+    RAM[3] = THIS / POINTER + 0
+    RAM[4] = THAT / POINTER + 1
     RAM[5-12] = TEMP
     '''
     lines = []
@@ -107,7 +110,10 @@ def pop_to_symbol(symbol: str, offset: str) -> list[str]:
     lines.extend(pop_from_stack(write_to_d = True))
 
     # get initial address
-    if symbol == 'TEMP':
+    if symbol == 'POINTER':
+        lines.extend(['@3'])
+
+    elif symbol == 'TEMP':
         lines.extend(['@5'])
 
     else:
@@ -225,7 +231,7 @@ def parse_multiple_lines(lines) -> list[str]:
     math_commands = ['add', 'sub', 'or', 'and']
     logic_commands = ['eq', 'lt', 'gt', 'neg', 'and', 'or', 'not']
 
-    pointers = {'this': 'THIS', 'that': 'THAT', 'local': 'LCL', 'argument': 'ARG', 'temp': 'TEMP'}
+    pointers = {'this': 'THIS', 'that': 'THAT', 'local': 'LCL', 'argument': 'ARG', 'temp': 'TEMP', 'pointer': 'POINTER'}
 
     return_lines = []
 
@@ -286,7 +292,7 @@ if __name__ == "__main__":
     #     translate(file)
 
     # Part 2
-    memory_files = ['./MemoryAccess/BasicTest/BasicTest.vm']
+    memory_files = ['./MemoryAccess/BasicTest/BasicTest.vm', './MemoryAccess/PointerTest/PointerTest.vm', './MemoryAccess/StaticTest/StaticTest.vm']
 
     for file in memory_files:
         translate(file)
