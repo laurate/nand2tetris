@@ -69,6 +69,7 @@ def push_from_symbol(symbol: str, offset: str) -> list[str]:
     RAM[3] = THIS / POINTER + 0
     RAM[4] = THAT / POINTER + 1
     RAM[5-12] = TEMP
+    RAM[16-255] = STATIC
     '''
     lines = []
     lines.extend([f'// PUSH value from {symbol} to stack'])
@@ -79,6 +80,9 @@ def push_from_symbol(symbol: str, offset: str) -> list[str]:
 
     elif symbol == 'TEMP':
         lines.extend(['@5'])
+
+    elif symbol == 'STATIC':
+        lines.extend(['@16'])
 
     else:
         lines.extend([f'@{symbol}'])
@@ -102,6 +106,7 @@ def pop_to_symbol(symbol: str, offset: str) -> list[str]:
     RAM[3] = THIS / POINTER + 0
     RAM[4] = THAT / POINTER + 1
     RAM[5-12] = TEMP
+    RAM[16-255] = STATIC
     '''
     lines = []
     lines.extend([f'// POP value from stack to {symbol}'])
@@ -115,6 +120,9 @@ def pop_to_symbol(symbol: str, offset: str) -> list[str]:
 
     elif symbol == 'TEMP':
         lines.extend(['@5'])
+
+    elif symbol == 'STATIC':
+        lines.extend(['@16'])
 
     else:
         lines.extend([f'@{symbol}'])
@@ -231,7 +239,7 @@ def parse_multiple_lines(lines) -> list[str]:
     math_commands = ['add', 'sub', 'or', 'and']
     logic_commands = ['eq', 'lt', 'gt', 'neg', 'and', 'or', 'not']
 
-    pointers = {'this': 'THIS', 'that': 'THAT', 'local': 'LCL', 'argument': 'ARG', 'temp': 'TEMP', 'pointer': 'POINTER'}
+    pointers = {'this': 'THIS', 'that': 'THAT', 'local': 'LCL', 'argument': 'ARG', 'temp': 'TEMP', 'pointer': 'POINTER', 'static': 'STATIC'}
 
     return_lines = []
 
