@@ -2,7 +2,10 @@
 
 # Chapter 7 - VM Translator (stack arithmetic, memory access)
 
+import sys
+
 from typing import Optional
+from pathlib import Path
 
 ############################################################################################################################################################################
 
@@ -275,34 +278,56 @@ def parse_multiple_lines(lines) -> list[str]:
 
     return return_lines
 
-def translate(input_file: str) -> None:
+def translate(input_file: str, print_output: bool = False) -> None:
+    '''
+    Translate a single .vm file and write to .asm file
+    '''
 
-    print(f'Translating file {input_file}...\n')
+    print(f'\nTranslating file {input_file}...')
 
     lines = [line.strip() for line in read_input_as_str(input_file)]
     lines = clean_whitespace(lines)
 
     output = parse_multiple_lines(lines)
 
-    print('Output: ', output)
+    if print_output:
+        print('Output: ', output)
 
     output_file = input_file.replace('.vm', '.asm')
+    print(f'... writing output to {output_file}')
     write_output_to_file(output, output_file)
+
+def parse_files_from_input(input: str) -> list[str]:
+    '''
+    Create list of files from input argument
+    '''
+    path = Path(argument)
+
+    if path.suffix == '.vm':
+        return [path]
+
+    else:
+        directory_list = list(path.glob('**/*.vm'))
+        if len(directory_list) > 0:
+            return directory_list
+        else:
+            print(f'Could not find any .vm files at path {input}')
 
 ############################################################################################################################################################################
 
 if __name__ == "__main__":
+    '''
+    Pass a file or directory to translate, e.g. "python3 vm_translator.py ./StackArithmetic"
+    '''
+    try:
+        argument = sys.argv[1]
+        files = parse_files_from_input(argument)
+        clear_files = [str(file) for file in files]
 
-    # Part 1
-    # arithmetic_files = ['./StackArithmetic/SimpleAdd/SimpleAdd.vm', './StackArithmetic/StackTest/StackTest.vm']
+        for file in clear_files:
+            translate(file)
 
-    # for file in arithmetic_files:
-    #     translate(file)
-
-    # Part 2
-    memory_files = ['./MemoryAccess/BasicTest/BasicTest.vm', './MemoryAccess/PointerTest/PointerTest.vm', './MemoryAccess/StaticTest/StaticTest.vm']
-
-    for file in memory_files:
-        translate(file)
+    except:
+        print('Please pass a valid file or directory path to translate (e.g. ./StackArithmetic/)')
 
 ############################################################################################################################################################################
